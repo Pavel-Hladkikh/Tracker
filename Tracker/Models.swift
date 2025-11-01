@@ -1,4 +1,3 @@
-import Foundation
 import UIKit
 
 enum Weekday: Int, CaseIterable, Hashable {

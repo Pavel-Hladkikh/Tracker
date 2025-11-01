@@ -28,23 +28,35 @@ final class TrackerStorage {
     private init() {}
     
     private let filename = "tracker_state.json"
-    private var fileURL: URL {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return dir.appendingPathComponent(filename)
+    
+    private var fileURL: URL? {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
+            .appendingPathComponent(filename)
     }
     
     func load() -> (categories: [TrackerCategory], completed: Set<TrackerRecord>)? {
-        guard let data = try? Data(contentsOf: fileURL) else { return nil }
-        guard let dto = try? JSONDecoder().decode(AppStateDTO.self, from: data) else { return nil }
+        guard
+            let fileURL = fileURL,
+            let data = try? Data(contentsOf: fileURL),
+            let dto = try? JSONDecoder().decode(AppStateDTO.self, from: data)
+        else {
+            return nil
+        }
+        
         let categories = dto.categories.map { $0.toModel() }
-        let completedArray = dto.completed.map { TrackerRecord(trackerId: $0.trackerId, date: $0.date) }
+        let completedArray = dto.completed.map {
+            TrackerRecord(trackerId: $0.trackerId, date: $0.date)
+        }
         return (categories, Set(completedArray))
     }
     
     func save(categories: [TrackerCategory], completed: Set<TrackerRecord>) {
+        guard let fileURL = fileURL else { return }
         let dto = AppStateDTO(
             categories: categories.map { $0.toDTO() },
-            completed: Array(completed).map { TrackerRecordDTO(trackerId: $0.trackerId, date: $0.date) }
+            completed: Array(completed).map {
+                TrackerRecordDTO(trackerId: $0.trackerId, date: $0.date)
+            }
         )
         do {
             let data = try JSONEncoder().encode(dto)
@@ -63,8 +75,10 @@ private extension TrackerCategoryDTO {
 
 private extension TrackerDTO {
     func toModel() -> Tracker {
-        let color = UIColor(hexString: colorHex) ?? .black
-        let scheduleSet: Set<Weekday>? = schedule.map { Set($0.compactMap(Weekday.init(rawValue:))) }
+        let color = UIColor.hex(colorHex, fallback: .black)
+        let scheduleSet: Set<Weekday>? = schedule.map {
+            Set($0.compactMap(Weekday.init(rawValue:)))
+        }
         return Tracker(id: id, name: name, color: color, emoji: emoji, schedule: scheduleSet)
     }
 }
