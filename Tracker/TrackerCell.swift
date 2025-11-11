@@ -63,14 +63,13 @@ final class TrackerCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        label.textColor = UIColor.hex("#1A1B22")
+        let normalColor = UIColor.hex("#1A1B22")
         label.text = "0 дней"
         return label
     }()
     
     private var trackerIdentifier: UUID?
     private var trackerColor: UIColor = .systemGreen
-    
     private let completedAlpha: CGFloat = 0.28
     
     override init(frame: CGRect) {
@@ -138,16 +137,15 @@ final class TrackerCell: UICollectionViewCell {
         trackerColor = tracker.color
         
         cardContainerView.backgroundColor = trackerColor
-        
         emojiLabel.text = tracker.emoji.isEmpty ? "🙂" : tracker.emoji
         nameLabel.text = tracker.name
-        
         applyToggleAppearance(isCompleted: isCompleted)
-        
         counterLabel.text = "\(totalCompletions) дней"
     }
     
-    func currentTrackerId() -> UUID? { trackerIdentifier }
+    func currentTrackerId() -> UUID? {
+        trackerIdentifier
+    }
     
     private func applyToggleAppearance(isCompleted: Bool) {
         let cfg = UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)
@@ -164,18 +162,5 @@ final class TrackerCell: UICollectionViewCell {
         toggleButton.tintColor = .white
         toggleButton.imageView?.tintColor = .white
         toggleButton.accessibilityLabel = isCompleted ? "Снять отметку" : "Отметить выполнение"
-    }
-}
-
-private extension UIColor {
-    static func hex(_ hex: String, alpha: CGFloat = 1) -> UIColor {
-        var h = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-        if h.count == 3 { h = h.map { "\($0)\($0)" }.joined() }
-        var rgb: UInt64 = 0
-        Scanner(string: h).scanHexInt64(&rgb)
-        let r = CGFloat((rgb >> 16) & 0xFF) / 255.0
-        let g = CGFloat((rgb >> 8) & 0xFF) / 255.0
-        let b = CGFloat(rgb & 0xFF) / 255.0
-        return UIColor(red: r, green: g, blue: b, alpha: alpha)
     }
 }

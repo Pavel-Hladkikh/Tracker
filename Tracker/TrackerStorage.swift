@@ -1,27 +1,5 @@
+import Foundation
 import UIKit
-
-private struct TrackerDTO: Codable {
-    let id: UUID
-    let name: String
-    let colorHex: String
-    let emoji: String
-    let schedule: [Int]?
-}
-
-private struct TrackerCategoryDTO: Codable {
-    let title: String
-    let trackers: [TrackerDTO]
-}
-
-private struct TrackerRecordDTO: Codable {
-    let trackerId: UUID
-    let date: Date
-}
-
-private struct AppStateDTO: Codable {
-    let categories: [TrackerCategoryDTO]
-    let completed: [TrackerRecordDTO]
-}
 
 final class TrackerStorage {
     static let shared = TrackerStorage()
@@ -34,78 +12,91 @@ final class TrackerStorage {
             .appendingPathComponent(filename)
     }
     
+    private func colorForUUID(_ id: UUID) -> UIColor {
+        let s = id.uuidString.unicodeScalars.map { UInt32($0.value) }
+        let sum = s.reduce(0, +)
+        let hue = CGFloat(sum % 360) / 360.0
+        return UIColor(hue: hue, saturation: 0.62, brightness: 0.86, alpha: 1)
+    }
+    
+ 
     func load() -> (categories: [TrackerCategory], completed: Set<TrackerRecord>)? {
-        guard
-            let fileURL = fileURL,
-            let data = try? Data(contentsOf: fileURL),
-            let dto = try? JSONDecoder().decode(AppStateDTO.self, from: data)
-        else {
+        guard let fileURL = fileURL,
+              let data = try? Data(contentsOf: fileURL),
+              let dto = try? JSONDecoder().decode(AppStateDTO.self, from: data) else {
             return nil
         }
         
-        let categories = dto.categories.map { $0.toModel() }
-        let completedArray = dto.completed.map {
-            TrackerRecord(trackerId: $0.trackerId, date: $0.date)
+        let categories = dto.categories.map { c -> TrackerCategory in
+            let trackers = c.trackers.map { t -> Tracker in
+                Tracker(
+                    id: t.id,
+                    name: t.name,
+                    color: colorForUUID(t.id),
+                    emoji: t.emoji,
+                    schedule: nil
+                )
+            }
+            return TrackerCategory(id: c.id, title: c.title, trackers: trackers)
         }
+        
+        let completedArray = dto.completed.map { TrackerRecord(trackerId: $0.trackerId, date: $0.date) }
         return (categories, Set(completedArray))
     }
     
-    func save(categories: [TrackerCategory], completed: Set<TrackerRecord>) {
-        guard let fileURL = fileURL else { return }
-        let dto = AppStateDTO(
-            categories: categories.map { $0.toDTO() },
-            completed: Array(completed).map {
-                TrackerRecordDTO(trackerId: $0.trackerId, date: $0.date)
+    func save(categories: [TrackerCategory], completed: Set<TrackerRecord>) throws {
+        guard let fileURL = fileURL else { throw StorageError.fileURLUnavailable }
+        
+        let categoryDTOs: [CategoryDTO] = categories.map { cat in
+            let trackerDTOs = cat.trackers.map { tr in
+                TrackerDTO(id: tr.id, name: tr.name, emoji: tr.emoji)
             }
-        )
-        do {
-            let data = try JSONEncoder().encode(dto)
-            try data.write(to: fileURL, options: .atomic)
-        } catch {
-            print("TrackerStorage save error:", error)
+            return CategoryDTO(id: cat.id, title: cat.title, trackers: trackerDTOs)
+        }
+        
+        let completedDTOs = completed.map { rec in
+            CompletedDTO(trackerId: rec.trackerId, date: rec.date)
+        }
+        
+        let app = AppStateDTO(categories: categoryDTOs, completed: Array(completedDTOs))
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        
+        let data = try encoder.encode(app)
+        try data.write(to: fileURL, options: .atomic)
+    }
+    
+    func clear() throws {
+        guard let fileURL = fileURL else { return }
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            try FileManager.default.removeItem(at: fileURL)
         }
     }
-}
-
-private extension TrackerCategoryDTO {
-    func toModel() -> TrackerCategory {
-        TrackerCategory(title: title, trackers: trackers.map { $0.toModel() })
+    
+    private struct AppStateDTO: Codable {
+        var categories: [CategoryDTO]
+        var completed: [CompletedDTO]
     }
-}
-
-private extension TrackerDTO {
-    func toModel() -> Tracker {
-        let color = UIColor.hex(colorHex, fallback: .black)
-        let scheduleSet: Set<Weekday>? = schedule.map {
-            Set($0.compactMap(Weekday.init(rawValue:)))
-        }
-        return Tracker(id: id, name: name, color: color, emoji: emoji, schedule: scheduleSet)
+    
+    private struct CategoryDTO: Codable {
+        var id: UUID
+        var title: String
+        var trackers: [TrackerDTO]
     }
-}
-
-private extension TrackerCategory {
-    func toDTO() -> TrackerCategoryDTO {
-        TrackerCategoryDTO(title: title, trackers: trackers.map { $0.toDTO() })
+    
+    private struct TrackerDTO: Codable {
+        var id: UUID
+        var name: String
+        var emoji: String
     }
-}
-
-private extension Tracker {
-    func toDTO() -> TrackerDTO {
-        TrackerDTO(
-            id: id,
-            name: name,
-            colorHex: color.toHexString() ?? "#000000",
-            emoji: emoji,
-            schedule: schedule.map { $0.map { $0.rawValue } }
-        )
+    
+    private struct CompletedDTO: Codable {
+        var trackerId: UUID
+        var date: Date
     }
-}
-
-private extension UIColor {
-    func toHexString() -> String? {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        guard getRed(&r, green: &g, blue: &b, alpha: &a) else { return nil }
-        let ri = Int(round(r * 255)), gi = Int(round(g * 255)), bi = Int(round(b * 255))
-        return String(format: "#%02X%02X%02X", ri, gi, bi)
+    
+    enum StorageError: Error {
+        case fileURLUnavailable
     }
 }
