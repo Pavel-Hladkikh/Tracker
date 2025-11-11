@@ -1,23 +1,11 @@
 import UIKit
 
-extension UIColor {
-    static func hex(_ hex: String, alpha: CGFloat = 1.0, fallback: UIColor = .clear) -> UIColor {
-        var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        if cleaned.hasPrefix("#") { cleaned.removeFirst() }
-        guard cleaned.count == 6, let value = UInt32(cleaned, radix: 16) else { return fallback }
-        let r = CGFloat((value & 0xFF0000) >> 16) / 255.0
-        let g = CGFloat((value & 0x00FF00) >> 8) / 255.0
-        let b = CGFloat(value & 0x0000FF) / 255.0
-        return UIColor(red: r, green: g, blue: b, alpha: alpha)
-    }
-}
-
 final class TabBarController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureTabBarAppearance()
         setupTabs()
+        configureTabBarAppearance()
     }
     
     private func setupTabs() {
@@ -33,7 +21,6 @@ final class TabBarController: UITabBarController {
         let statistics = StatisticsViewController()
         let statisticsNav = UINavigationController(rootViewController: statistics)
         statisticsNav.navigationBar.prefersLargeTitles = true
-        statistics.title = "Статистика"
         statistics.tabBarItem = UITabBarItem(
             title: "Статистика",
             image: UIImage(systemName: "hare.fill"),
@@ -45,25 +32,24 @@ final class TabBarController: UITabBarController {
     
     private func configureTabBarAppearance() {
         let selectedColor = UIColor.hex("#3772E7")
-        let normalColor   = UIColor.hex("#AEAFB4")
+        let normalColor = UIColor.hex("#AEAFB4")
         let titleFont = UIFont.systemFont(ofSize: 10, weight: .medium)
         
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .white
         
-        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: selectedColor, .font: titleFont]
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes   = [.foregroundColor: normalColor,   .font: titleFont]
-        appearance.inlineLayoutAppearance.selected.titleTextAttributes  = appearance.stackedLayoutAppearance.selected.titleTextAttributes
-        appearance.inlineLayoutAppearance.normal.titleTextAttributes    = appearance.stackedLayoutAppearance.normal.titleTextAttributes
-        appearance.compactInlineLayoutAppearance.selected.titleTextAttributes = appearance.stackedLayoutAppearance.selected.titleTextAttributes
-        appearance.compactInlineLayoutAppearance.normal.titleTextAttributes   = appearance.stackedLayoutAppearance.normal.titleTextAttributes
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: selectedColor,
+            .font: titleFont
+        ]
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: normalColor,
+            .font: titleFont
+        ]
         
         tabBar.tintColor = selectedColor
-        tabBar.unselectedItemTintColor = normalColor
         tabBar.standardAppearance = appearance
-        if #available(iOS 15.0, *) {
-            tabBar.scrollEdgeAppearance = appearance
-        }
+        tabBar.scrollEdgeAppearance = appearance
     }
 }
