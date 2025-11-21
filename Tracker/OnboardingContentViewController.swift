@@ -44,10 +44,10 @@ final class OnboardingContentViewController: UIViewController {
     private let actionButton: UIButton = {
         let b = UIButton(type: .system)
         b.translatesAutoresizingMaskIntoConstraints = false
-        b.setTitle("Вот это технологии!", for: .normal)
+        b.setTitle(NSLocalizedString("onboarding_button", comment: ""), for: .normal)
         b.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         b.setTitleColor(.white, for: .normal)
-        b.backgroundColor = UIColor.hex("#0E0E11")
+        b.backgroundColor = UIColor.hex("#1A1B22")
         b.layer.cornerRadius = 20
         b.layer.masksToBounds = true
         return b
@@ -135,13 +135,10 @@ final class OnboardingContentViewController: UIViewController {
     private func applyContent() {
         backgroundImageView.image = UIImage(named: page.backgroundImageName)
         
-        var text = page.titleText
-        if pageIndex == 1 {
-            if let range = text.range(of: "не ") {
-                text.replaceSubrange(range, with: "\nне ")
-            }
+        var text = NSLocalizedString(page.titleKey, comment: "")
+        if pageIndex == 1, let range = text.range(of: "не ") {
+            text.replaceSubrange(range, with: "\nне ")
         }
-        
         titleLabel.text = text
         titleLabel.font = UIFont.systemFont(ofSize: scaledFontSize, weight: .bold)
     }

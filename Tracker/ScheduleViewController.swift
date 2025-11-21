@@ -10,8 +10,8 @@ final class ScheduleViewController: UIViewController, UITableViewDataSource, UIT
     private let buttonHeight: CGFloat = 60
     private let corner: CGFloat = 16
     
-    private let titleBlack: UIColor = UIColor.hex("#1A1B22")
-    private let cardGray: UIColor   = UIColor.hex("#E6E8EB", alpha: 0.3)
+    private let titleBlack: UIColor = Colors.baseInverse
+    private let cardGray: UIColor   = Colors.cardStroke
     
     private var selectedWeekdays: Set<Weekday>
     var onDone: ((Set<Weekday>) -> Void)?
@@ -29,7 +29,7 @@ final class ScheduleViewController: UIViewController, UITableViewDataSource, UIT
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = Colors.base
         navigationController?.setNavigationBarHidden(true, animated: false)
         
         setupTitleLabel()
@@ -52,7 +52,7 @@ final class ScheduleViewController: UIViewController, UITableViewDataSource, UIT
     
     private func setupTitleLabel() {
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Расписание"
+        titleLabel.text = NSLocalizedString("schedule_title", comment: "")
         titleLabel.font = .systemFont(ofSize: 16, weight: .medium)
         titleLabel.textAlignment = .center
         titleLabel.textColor = titleBlack
@@ -80,12 +80,12 @@ final class ScheduleViewController: UIViewController, UITableViewDataSource, UIT
     
     private func setupDoneButton() {
         doneButton.translatesAutoresizingMaskIntoConstraints = false
-        doneButton.setTitle("Готово", for: .normal)
+        doneButton.setTitle(NSLocalizedString("done_button_title", comment: ""), for: .normal)
         doneButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         doneButton.layer.cornerRadius = corner
         doneButton.layer.masksToBounds = true
-        doneButton.backgroundColor = UIColor.hex("#0E0E11")
-        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.backgroundColor = Colors.baseInverse
+        doneButton.setTitleColor(Colors.base, for: .normal)
         doneButton.heightAnchor.constraint(equalToConstant: buttonHeight).isActive = true
         doneButton.addTarget(self, action: #selector(doneTapped), for: .touchUpInside)
         view.addSubview(doneButton)

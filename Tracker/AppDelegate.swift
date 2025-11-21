@@ -1,13 +1,24 @@
 import UIKit
+import AppMetricaCore
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     
+    private let appMetricaApiKey = "1f52b69f-90ad-4d8a-a809-390d46369755"
+    
     func application(
         _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        
         _ = CoreDataStack.shared
+        
+        if let configuration = AppMetricaConfiguration(apiKey: appMetricaApiKey) {
+            AppMetrica.activate(with: configuration)
+        } else {
+            print("AppMetrica configuration failed")
+        }
+        
         return true
     }
     
@@ -29,6 +40,5 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didDiscardSceneSessions sceneSessions: Set<UISceneSession>
     ) {
-        
     }
 }
