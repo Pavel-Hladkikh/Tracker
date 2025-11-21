@@ -1,0 +1,72 @@
+"trackers_title" = "Trackers";
+"statistics_title" = "Statistics";
+
+"category_title" = "Category";
+"categories_title" = "Categories";
+
+"new_category_title" = "New category";
+"edit_category_title" = "Edit category";
+"category_placeholder" = "Enter category name";
+"category_limit_warning" = "Limit 38 characters";
+"add_category_button" = "Add category";
+"categories_placeholder" = "Habits and events can\nbe grouped by meaning";
+
+"new_habit_title" = "New habit";
+"name_limit_warning" = "Limit 38 characters";
+"tracker_name_placeholder" = "Enter tracker name";
+
+"color_title" = "Color";
+"schedule_title" = "Schedule";
+"schedule_every_day" = "Every day";
+"schedule_not_set" = "Not set";
+"done_button_title" = "Done";
+"edit_button_title" = "Edit";
+"create_button_title" = "Create";
+"cancel_button_title" = "Cancel";
+"delete_button_title" = "Delete";
+"ok_button_title" = "OK";
+
+"search_placeholder" = "Search";
+"empty_state_title" = "What shall we track?";
+
+"onboarding_title_1" = "Track only what you want";
+"onboarding_title_2" = "Even if it’s not liters of water and yoga";
+"onboarding_button" = "That’s some technology!";
+
+"delete_tracker_title" = "Delete tracker";
+"delete_tracker_message" = "Delete tracker “%@”?";
+
+"unmark_action" = "Unmark";
+"mark_done_action" = "Mark as done";
+"add_button_accessibility" = "Add";
+
+"weekday_full_monday" = "Monday";
+"weekday_full_tuesday" = "Tuesday";
+"weekday_full_wednesday" = "Wednesday";
+"weekday_full_thursday" = "Thursday";
+"weekday_full_friday" = "Friday";
+"weekday_full_saturday" = "Saturday";
+"weekday_full_sunday" = "Sunday";
+
+"weekday_short_monday" = "Mon";
+"weekday_short_tuesday" = "Tue";
+"weekday_short_wednesday" = "Wed";
+"weekday_short_thursday" = "Thu";
+"weekday_short_friday" = "Fri";
+"weekday_short_saturday" = "Sat";
+"weekday_short_sunday" = "Sun";
+
+"delete_category_confirm_title" = "Are you sure you don’t need this category?";
+"filters_title" = "Filters";
+"filters_all" = "All trackers";
+"filters_today" = "Trackers for today";
+"filters_done" = "Completed";
+"filters_undone" = "Incomplete";
+"nothing_found_placeholder" = "Nothing found";
+"filters_title" = "Filters";
+"edit_habit_title" = "Edit habit";
+"save_button_title" = "Save";
+"days_count_format" = "%d days";
+"delete_tracker_confirm" = "Are you sure you want to delete the tracker?";
+"statistics_empty_title" = "Nothing to analyze yet";
+"statistics_completed_subtitle" = "Trackers completed";

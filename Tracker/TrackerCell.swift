@@ -9,7 +9,7 @@ final class TrackerCell: UICollectionViewCell {
     static let reuseIdentifier = "TrackerCell"
     weak var delegate: TrackerCellDelegate?
     
-    private let cardContainerView: UIView = {
+    let cardContainerView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.layer.cornerRadius = 16
@@ -20,7 +20,7 @@ final class TrackerCell: UICollectionViewCell {
     private let emojiBackgroundView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+        view.backgroundColor = .white.withAlphaComponent(0.3)
         view.layer.cornerRadius = 12
         view.layer.masksToBounds = true
         return view
@@ -53,9 +53,9 @@ final class TrackerCell: UICollectionViewCell {
         button.layer.cornerRadius = 17
         button.layer.masksToBounds = true
         button.backgroundColor = .clear
-        button.tintColor = .white
+        button.tintColor = Colors.base
         button.imageView?.contentMode = .scaleAspectFit
-        button.accessibilityLabel = "Отметить выполнение"
+        button.accessibilityLabel = NSLocalizedString("mark_done_action", comment: "")
         return button
     }()
     
@@ -63,8 +63,8 @@ final class TrackerCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        let normalColor = UIColor.hex("#1A1B22")
-        label.text = "0 дней"
+        let normalColor = Colors.baseInverse
+        label.text = String.localizedStringWithFormat(NSLocalizedString("days_format", comment: ""),0)
         return label
     }()
     
@@ -140,7 +140,7 @@ final class TrackerCell: UICollectionViewCell {
         emojiLabel.text = tracker.emoji.isEmpty ? "🙂" : tracker.emoji
         nameLabel.text = tracker.name
         applyToggleAppearance(isCompleted: isCompleted)
-        counterLabel.text = "\(totalCompletions) дней"
+        counterLabel.text = String.localizedStringWithFormat(NSLocalizedString("days_format", comment: ""), totalCompletions)
     }
     
     func currentTrackerId() -> UUID? {
@@ -150,17 +150,19 @@ final class TrackerCell: UICollectionViewCell {
     private func applyToggleAppearance(isCompleted: Bool) {
         let cfg = UIImage.SymbolConfiguration(pointSize: 16, weight: .bold)
         let plus = UIImage(systemName: "plus")!.applyingSymbolConfiguration(cfg)!
-            .withTintColor(.white, renderingMode: .alwaysOriginal)
+            .withTintColor(Colors.base, renderingMode: .alwaysOriginal)
         let check = UIImage(systemName: "checkmark")!.applyingSymbolConfiguration(cfg)!
-            .withTintColor(.white, renderingMode: .alwaysOriginal)
+            .withTintColor(Colors.base, renderingMode: .alwaysOriginal)
         
         toggleButton.backgroundColor = isCompleted
         ? trackerColor.withAlphaComponent(completedAlpha)
         : trackerColor
         
         toggleButton.setImage(isCompleted ? check : plus, for: .normal)
-        toggleButton.tintColor = .white
-        toggleButton.imageView?.tintColor = .white
-        toggleButton.accessibilityLabel = isCompleted ? "Снять отметку" : "Отметить выполнение"
+        toggleButton.tintColor = Colors.base
+        toggleButton.imageView?.tintColor = Colors.base
+        toggleButton.accessibilityLabel = isCompleted
+        ? NSLocalizedString("unmark_action", comment: "")
+        : NSLocalizedString("mark_done_action", comment: "")
     }
 }

@@ -13,7 +13,7 @@ final class TabBarController: UITabBarController {
         let trackersNav = UINavigationController(rootViewController: trackers)
         trackersNav.navigationBar.prefersLargeTitles = true
         trackers.tabBarItem = UITabBarItem(
-            title: "Трекеры",
+            title: NSLocalizedString("trackers_title", comment: ""),
             image: UIImage(systemName: "record.circle"),
             selectedImage: UIImage(systemName: "record.circle.fill")
         )
@@ -22,7 +22,7 @@ final class TabBarController: UITabBarController {
         let statisticsNav = UINavigationController(rootViewController: statistics)
         statisticsNav.navigationBar.prefersLargeTitles = true
         statistics.tabBarItem = UITabBarItem(
-            title: "Статистика",
+            title: NSLocalizedString("statistics_title", comment: ""),
             image: UIImage(systemName: "hare.fill"),
             selectedImage: UIImage(systemName: "hare.fill")
         )
@@ -37,7 +37,7 @@ final class TabBarController: UITabBarController {
         
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .white
+        appearance.backgroundColor = Colors.base
         
         appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
             .foregroundColor: selectedColor,

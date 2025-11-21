@@ -2,19 +2,15 @@ import UIKit
 
 final class CategoriesViewController: UIViewController {
     
-    
     var onCategoryPicked: ((TrackerCategory) -> Void)?
-    
     
     private let viewModel: CategoriesViewModel
     
-    
-    
     private let titleLabel: UILabel = {
         let l = UILabel()
-        l.text = "Категория"
+        l.text = NSLocalizedString("category_title", comment: "")
         l.font = .systemFont(ofSize: 16, weight: .medium)
-        l.textColor = .black
+        l.textColor = Colors.baseInverse
         l.textAlignment = .center
         l.translatesAutoresizingMaskIntoConstraints = false
         return l
@@ -36,9 +32,9 @@ final class CategoriesViewController: UIViewController {
         imageView.contentMode = .scaleAspectFit
         
         let label = UILabel()
-        label.text = "Привычки и события можно\nобъединить по смыслу"
+        label.text = NSLocalizedString("categories_placeholder", comment: "")
         label.font = .systemFont(ofSize: 12, weight: .medium)
-        label.textColor = UIColor.hex("#1A1B22")
+        label.textColor = Colors.baseInverse
         label.textAlignment = .center
         label.numberOfLines = 0
         
@@ -53,10 +49,10 @@ final class CategoriesViewController: UIViewController {
     
     private let addButton: UIButton = {
         let b = UIButton(type: .system)
-        b.setTitle("Добавить категорию", for: .normal)
-        b.setTitleColor(.white, for: .normal)
+        b.setTitle(NSLocalizedString("add_category_button", comment: ""), for: .normal)
+        b.setTitleColor(Colors.base, for: .normal)
         b.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        b.backgroundColor = .black
+        b.backgroundColor = Colors.baseInverse
         b.layer.cornerRadius = 16
         b.layer.masksToBounds = true
         b.translatesAutoresizingMaskIntoConstraints = false
@@ -79,7 +75,7 @@ final class CategoriesViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = Colors.base
         
         setupUI()
         setupTable()
@@ -122,8 +118,8 @@ final class CategoriesViewController: UIViewController {
         tableView.layer.cornerRadius = 0
         tableView.layer.masksToBounds = false
         tableView.tableFooterView = UIView(frame: .zero)
-        let longPress = UILongPressGestureRecognizer(target: self,
-                                                     action: #selector(handleLongPress(_:)))
+        
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         longPress.minimumPressDuration = 0.4
         tableView.addGestureRecognizer(longPress)
     }
@@ -152,6 +148,7 @@ final class CategoriesViewController: UIViewController {
         placeholderStack.isHidden = !isEmpty
     }
     
+    
     @objc private func addCategoryTapped() {
         let vc = NewCategoryViewController()
         vc.modalPresentationStyle = .pageSheet
@@ -171,6 +168,7 @@ final class CategoriesViewController: UIViewController {
         showContextMenu(for: indexPath, anchorCell: cell)
     }
     
+    
     private func showContextMenu(for indexPath: IndexPath, anchorCell: UITableViewCell) {
         hideContextMenu()
         
@@ -187,14 +185,6 @@ final class CategoriesViewController: UIViewController {
         let blurEffect = UIBlurEffect(style: .systemUltraThinMaterial)
         let blur = UIVisualEffectView(effect: blurEffect)
         
-        guard
-            let windowScene = view.window?.windowScene
-                ?? (UIApplication.shared.connectedScenes.first as? UIWindowScene),
-            let window = windowScene.windows.first(where: { $0.isKeyWindow })
-        else {
-            return
-        }
-        
         blur.frame = window.bounds
         blur.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
@@ -208,7 +198,6 @@ final class CategoriesViewController: UIViewController {
         UIView.animate(withDuration: 0.2) {
             blur.alpha = 0.25
         }
-        
         
         if let catCell = anchorCell as? CategoryCell {
             catCell.separatorInset = UIEdgeInsets(top: 0,
@@ -237,7 +226,7 @@ final class CategoriesViewController: UIViewController {
                                         y: menuY,
                                         width: menuWidth,
                                         height: rowHeight * 2))
-        menu.backgroundColor = UIColor.hex("#F2F2F2", alpha: 0.8)
+        menu.backgroundColor = Colors.contextMenuBackground
         menu.layer.cornerRadius = 16
         menu.layer.masksToBounds = true
         window.addSubview(menu)
@@ -247,27 +236,26 @@ final class CategoriesViewController: UIViewController {
         var editConfig = UIButton.Configuration.plain()
         editConfig.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 16, bottom: 13, trailing: 16)
         editConfig.titleAlignment = .leading
-        editConfig.title = "Редактировать"
-        editConfig.baseForegroundColor = UIColor.hex("#1A1B22")
+        editConfig.title = NSLocalizedString("edit_button_title", comment: "")
+        editConfig.baseForegroundColor = Colors.baseInverse
         editButton.configuration = editConfig
         editButton.titleLabel?.font = .systemFont(ofSize: 17)
         editButton.tag = indexPath.row
         editButton.frame = CGRect(x: 0, y: 0, width: menuWidth, height: rowHeight)
         editButton.addTarget(self, action: #selector(editMenuTapped(_:)), for: .touchUpInside)
         menu.addSubview(editButton)
+        editButton.contentHorizontalAlignment = .leading
+        editButton.titleLabel?.textAlignment = .left
         
-        let separator = UIView(frame: CGRect(x: 0,
-                                             y: rowHeight - 0.5,
-                                             width: menuWidth,
-                                             height: 0.5))
-        separator.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+        let separator = UIView(frame: CGRect(x: 0, y: rowHeight - 0.5, width: menuWidth, height: 0.5))
+        separator.backgroundColor = Colors.baseInverse.withAlphaComponent(0.1)
         menu.addSubview(separator)
         
         let deleteButton = UIButton(type: .system)
         var deleteConfig = UIButton.Configuration.plain()
         deleteConfig.contentInsets = NSDirectionalEdgeInsets(top: 13, leading: 16, bottom: 13, trailing: 16)
         deleteConfig.titleAlignment = .leading
-        deleteConfig.title = "Удалить"
+        deleteConfig.title = NSLocalizedString("delete_button_title", comment: "")
         deleteConfig.baseForegroundColor = .systemRed
         deleteButton.configuration = deleteConfig
         deleteButton.titleLabel?.font = .systemFont(ofSize: 17)
@@ -275,6 +263,8 @@ final class CategoriesViewController: UIViewController {
         deleteButton.frame = CGRect(x: 0, y: rowHeight, width: menuWidth, height: rowHeight)
         deleteButton.addTarget(self, action: #selector(deleteMenuTapped(_:)), for: .touchUpInside)
         menu.addSubview(deleteButton)
+        deleteButton.contentHorizontalAlignment = .leading
+        deleteButton.titleLabel?.textAlignment = .left
         
         UIView.animate(withDuration: 0.2) {
             blur.alpha = 1
@@ -293,7 +283,6 @@ final class CategoriesViewController: UIViewController {
             
             let total = viewModel.countOfCategories
             if indexPath.row == total - 1 {
-                
                 cell.separatorInset = UIEdgeInsets(
                     top: 0,
                     left: tableView.bounds.width,
@@ -324,8 +313,6 @@ final class CategoriesViewController: UIViewController {
             self.contextMenuAnchorSnapshot = nil
         })
     }
-    
-    
     
     @objc private func overlayTap() {
         hideContextMenu()
@@ -358,15 +345,15 @@ final class CategoriesViewController: UIViewController {
         guard viewModel.category(at: index) != nil else { return }
         
         let alert = UIAlertController(
-            title: "Эта категория точно не нужна?",
+            title: NSLocalizedString("delete_category_confirm_title", comment: ""),
             message: nil,
             preferredStyle: .actionSheet
         )
         
-        let delete = UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+        let delete = UIAlertAction(title: NSLocalizedString("delete_button_title", comment: ""), style: .destructive) { [weak self] _ in
             self?.viewModel.deleteCategory(at: index)
         }
-        let cancel = UIAlertAction(title: "Отменить", style: .cancel)
+        let cancel = UIAlertAction(title: NSLocalizedString("cancel_button_title", comment: ""), style: .cancel)
         
         alert.addAction(delete)
         alert.addAction(cancel)
@@ -376,7 +363,7 @@ final class CategoriesViewController: UIViewController {
     
     private func showError(_ message: String) {
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("ok_button_title", comment: ""), style: .default))
         present(alert, animated: true)
     }
 }
