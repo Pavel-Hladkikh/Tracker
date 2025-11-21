@@ -1,90 +1,96 @@
-import Foundation
 import CoreData
 
-protocol TrackerCategoryStoreObserver: AnyObject {
-    func storeWillChangeContent()
-    func storeDidChangeSection(at sectionIndex: Int, for type: NSFetchedResultsChangeType)
-    func storeDidChangeItem(at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?)
-    func storeDidChangeContent()
+enum TrackerCategoryStoreError: Error {
+    case notFound
 }
 
-final class TrackerCategoryStore: NSObject, NSFetchedResultsControllerDelegate {
+final class TrackerCategoryStore {
+    private let context = CoreDataStack.shared.context
     
-    weak var observer: TrackerCategoryStoreObserver?
-    
-    private let context: NSManagedObjectContext
-    private var frc: NSFetchedResultsController<TrackerCategoryCoreData>!
-    
-    init(context: NSManagedObjectContext = CoreDataStack.shared.viewContext) {
-        self.context = context
-        super.init()
-        configureFRC()
-    }
-    
-    private func configureFRC() {
-        let request: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
-        request.sortDescriptors = [
-            NSSortDescriptor(key: "title", ascending: true, selector: #selector(NSString.localizedStandardCompare(_:)))
-        ]
-        frc = NSFetchedResultsController(
-            fetchRequest: request,
-            managedObjectContext: context,
-            sectionNameKeyPath: nil,
-            cacheName: nil
-        )
-        frc.delegate = self
-    }
-    
-    func performFetch() throws { try frc.performFetch() }
-    
-    func numberOfSections() -> Int { frc.sections?.count ?? 0 }
-    func numberOfItems(in section: Int) -> Int { frc.sections?[section].numberOfObjects ?? 0 }
-    func object(at indexPath: IndexPath) -> TrackerCategoryCoreData { frc.object(at: indexPath) }
-    
-    @discardableResult
-    func upsertCategory(with title: String) throws -> TrackerCategoryCoreData {
-        let request: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
-        request.predicate = NSPredicate(format: "title == %@", title)
-        request.fetchLimit = 1
-        let existing = try context.fetch(request).first
-        if let obj = existing { return obj }
+    func addCategory(title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         
-        let obj = TrackerCategoryCoreData(context: context)
-        obj.title = title
-        try saveIfNeeded()
-        return obj
+        guard !isCategoryExists(withTitle: trimmed) else { return }
+        
+        let cd = TrackerCategoryCoreData(context: context)
+        cd.id = UUID()
+        cd.title = trimmed
+        cd.createdAt = Date()
+        cd.isSelected = false
+        
+        saveContext()
     }
     
-    func deleteCategory(title: String) throws {
-        let request: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
-        request.predicate = NSPredicate(format: "title == %@", title)
-        if let obj = try context.fetch(request).first {
-            context.delete(obj)
-            try saveIfNeeded()
+    func fetchAllCategoriesWithoutFetchingIncludedTrackers() -> [TrackerCategory] {
+        let req: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
+        do {
+            let items = try context.fetch(req)
+            return items.map {
+                TrackerCategory(id: $0.id ?? UUID(),
+                                title: $0.title ?? "",
+                                trackers: [])
+            }
+        } catch {
+            print("Ошибка при получении категорий: \(error)")
+            return []
         }
     }
     
-    func saveIfNeeded() throws {
-        if context.hasChanges { try context.save() }
+    func updateCategory(id: UUID, newTitle: String) throws {
+        let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        let req: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+        req.fetchLimit = 1
+        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        guard let obj = try context.fetch(req).first else {
+            throw TrackerCategoryStoreError.notFound
+        }
+        
+        obj.title = trimmed
+        
+        if let trackers = obj.trackers as? Set<TrackerCoreData> {
+            for tracker in trackers {
+                tracker.category = obj
+            }
+        }
+        
+        try context.save()
     }
     
-    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        observer?.storeWillChangeContent()
+    func deleteCategory(id: UUID) throws {
+        let req: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+        req.fetchLimit = 1
+        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        guard let obj = try context.fetch(req).first else {
+            throw TrackerCategoryStoreError.notFound
+        }
+        
+        if let trackers = obj.trackers as? Set<TrackerCoreData> {
+            trackers.forEach { context.delete($0) }
+        }
+        
+        context.delete(obj)
+        try context.save()
     }
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>,
-                    didChange sectionInfo: NSFetchedResultsSectionInfo,
-                    atSectionIndex sectionIndex: Int,
-                    for type: NSFetchedResultsChangeType) {
-        observer?.storeDidChangeSection(at: sectionIndex, for: type)
+    
+    private func isCategoryExists(withTitle title: String) -> Bool {
+        let req: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+        req.predicate = NSPredicate(format: "title == %@", title)
+        let count = (try? context.count(for: req)) ?? 0
+        return count > 0
     }
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>,
-                    didChange anObject: Any,
-                    at indexPath: IndexPath?,
-                    for type: NSFetchedResultsChangeType,
-                    newIndexPath: IndexPath?) {
-        observer?.storeDidChangeItem(at: indexPath, for: type, newIndexPath: newIndexPath)
-    }
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        observer?.storeDidChangeContent()
+    
+    private func saveContext() {
+        guard context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            print("Ошибка сохранения контекста категорий: \(error)")
+        }
     }
 }

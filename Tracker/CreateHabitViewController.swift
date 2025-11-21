@@ -18,6 +18,7 @@ final class CreateHabitViewController: UIViewController,
     
     weak var delegate: CreateHabitDelegate?
     
+    
     private let side: CGFloat = 16
     private let listRowHeight: CGFloat = 75
     private let corner: CGFloat = 16
@@ -27,10 +28,23 @@ final class CreateHabitViewController: UIViewController,
     private let titleBlack = UIColor.hex("#1A1B22")
     private let createBlack = UIColor.hex("#0E0E11")
     private let createDisabled = UIColor.hex("#AEAFB4")
-    private let outlineRed = UIColor.hex("#F56B6C") 
+    private let outlineRed = UIColor.hex("#F56B6C")
+    
     
     private var selectedWeekdays: Set<Weekday> = []
-    private var categoryTitle: String?
+    private let savedCategoryTitleKey = "savedCategoryTitle"
+    
+    private var categoryTitle: String? {
+        get { UserDefaults.standard.string(forKey: savedCategoryTitleKey) }
+        set {
+            if let newValue = newValue {
+                UserDefaults.standard.set(newValue, forKey: savedCategoryTitleKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: savedCategoryTitleKey)
+            }
+        }
+    }
+    
     private let maxNameLength = 38
     
     private var selectedEmoji: String? { didSet { updateCreateButtonState() } }
@@ -54,18 +68,6 @@ final class CreateHabitViewController: UIViewController,
         return v
     }()
     
-    private lazy var clearButton: UIButton = {
-        let b = UIButton(type: .custom)
-        let s: CGFloat = 17
-        if let img = UIImage(systemName: "xmark.circle.fill")?.withTintColor(grayText, renderingMode: .alwaysOriginal) {
-            b.setImage(img, for: .normal)
-        }
-        b.frame = CGRect(x: 0, y: 0, width: s, height: s)
-        b.addTarget(self, action: #selector(clearName), for: .touchUpInside)
-        b.isHidden = true
-        return b
-    }()
-    
     private lazy var cancelButton: UIButton = {
         let b = baseButton("Отменить", filled: false)
         b.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
@@ -77,6 +79,20 @@ final class CreateHabitViewController: UIViewController,
         b.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
         return b
     }()
+    
+    private lazy var clearButton: UIButton = {
+        let b = UIButton(type: .custom)
+        let s: CGFloat = 17
+        if let img = UIImage(systemName: "xmark.circle.fill")?
+            .withTintColor(grayText, renderingMode: .alwaysOriginal) {
+            b.setImage(img, for: .normal)
+        }
+        b.frame = CGRect(x: 0, y: 0, width: s, height: s)
+        b.addTarget(self, action: #selector(clearName), for: .touchUpInside)
+        b.isHidden = true
+        return b
+    }()
+    
     
     private let emojiList = [
         "🙂","😻","🌺","🐶","❤️","😱",
@@ -107,8 +123,10 @@ final class CreateHabitViewController: UIViewController,
     )
     private var colorHeightConstraint: NSLayoutConstraint?
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        UserDefaults.standard.removeObject(forKey: savedCategoryTitleKey)
         view.backgroundColor = .white
         navigationController?.setNavigationBarHidden(true, animated: false)
         
@@ -117,10 +135,8 @@ final class CreateHabitViewController: UIViewController,
         setupTableAppearance()
         setupBottomButtons()
         setupScrollArea()
-        
         setupEmojiSection()
         setupColorSection()
-        
         setupKeyboardDismiss()
         updateCreateButtonState()
         
@@ -180,7 +196,8 @@ final class CreateHabitViewController: UIViewController,
         
         let rightContainer = UIView(frame: CGRect(x: 0, y: 0, width: 40, height: listRowHeight))
         rightContainer.addSubview(clearButton)
-        clearButton.center = CGPoint(x: rightContainer.bounds.maxX - 20, y: rightContainer.bounds.midY)
+        clearButton.center = CGPoint(x: rightContainer.bounds.maxX - 20,
+                                     y: rightContainer.bounds.midY)
         nameField.rightView = rightContainer
         nameField.rightViewMode = .whileEditing
         
@@ -224,13 +241,17 @@ final class CreateHabitViewController: UIViewController,
             scrollView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 38),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -84),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                                               constant: -84),
             
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: side),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -side),
-            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -2 * side)
+            contentStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor,
+                                                  constant: side),
+            contentStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor,
+                                                   constant: -side),
+            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor,
+                                                constant: -2 * side)
         ])
         
         tableHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: 0)
@@ -313,7 +334,8 @@ final class CreateHabitViewController: UIViewController,
         emojiCollection.dataSource = self
         emojiCollection.delegate = self
         emojiCollection.allowsMultipleSelection = false
-        emojiCollection.register(EmojiCell.self, forCellWithReuseIdentifier: "EmojiCell")
+        emojiCollection.register(EmojiCell.self,
+                                 forCellWithReuseIdentifier: "EmojiCell")
         
         contentStack.addArrangedSubview(emojiCollection)
         contentStack.setCustomSpacing(40, after: emojiCollection)
@@ -352,7 +374,8 @@ final class CreateHabitViewController: UIViewController,
         colorCollection.dataSource = self
         colorCollection.delegate = self
         colorCollection.allowsMultipleSelection = false
-        colorCollection.register(ColorCell.self, forCellWithReuseIdentifier: "ColorCell")
+        colorCollection.register(ColorCell.self,
+                                 forCellWithReuseIdentifier: "ColorCell")
         
         contentStack.addArrangedSubview(colorCollection)
         
@@ -360,12 +383,13 @@ final class CreateHabitViewController: UIViewController,
         colorHeightConstraint?.isActive = true
     }
     
-    @objc private func cancelTapped() { dismiss(animated: true) }
+    @objc private func cancelTapped() {
+        dismiss(animated: true)
+    }
     
     @objc private func textChanged() {
         let text = nameField.text ?? ""
-        let count = text.count
-        if count > maxNameLength {
+        if text.count > maxNameLength {
             let limited = String(text.prefix(maxNameLength))
             nameField.text = limited
         }
@@ -381,30 +405,55 @@ final class CreateHabitViewController: UIViewController,
     }
     
     @objc private func createTapped() {
-        guard let emoji = selectedEmoji, let color = selectedColor else { return }
         guard createButton.isEnabled else { return }
+        guard
+            let emoji = selectedEmoji,
+            let color = selectedColor
+        else { return }
         
-        let name = (nameField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = (nameField.text ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let schedule = selectedWeekdays
         
-        let tracker = Tracker(name: name, color: color, emoji: emoji, schedule: schedule)
-        let category = (categoryTitle?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
-        ? (categoryTitle ?? "")
-        : "Без категории"
+        guard
+            let categoryTitle = categoryTitle?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+            !categoryTitle.isEmpty
+        else { return }
         
-        delegate?.createHabitViewController(self, didCreate: tracker, in: category)
+        let tracker = Tracker(
+            name: name,
+            color: color,
+            emoji: emoji,
+            schedule: schedule
+        )
+        
+        delegate?.createHabitViewController(
+            self,
+            didCreate: tracker,
+            in: categoryTitle
+        )
+        
         dismiss(animated: true)
     }
     
+    
     private func setupKeyboardDismiss() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(endEditingForce))
+        let tap = UITapGestureRecognizer(target: self,
+                                         action: #selector(endEditingForce))
         tap.cancelsTouchesInView = false
         view.addGestureRecognizer(tap)
     }
     
-    @objc private func endEditingForce() { view.endEditing(true) }
+    @objc private func endEditingForce() {
+        view.endEditing(true)
+    }
     
-    private enum Row: Int, CaseIterable { case category, schedule }
+    
+    private enum Row: Int, CaseIterable {
+        case category
+        case schedule
+    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         Row.allCases.count
@@ -412,17 +461,15 @@ final class CreateHabitViewController: UIViewController,
     
     func tableView(_ tableView: UITableView,
                    cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let row = Row(rawValue: indexPath.row) else { return UITableViewCell() }
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        guard let row = Row(rawValue: indexPath.row) else {
+            return UITableViewCell()
+        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell",
+                                                 for: indexPath)
         cell.accessoryType = .disclosureIndicator
         cell.selectionStyle = .none
-        
-        if #available(iOS 14.0, *) {
-            cell.backgroundConfiguration = UIBackgroundConfiguration.clear()
-        } else {
-            cell.backgroundColor = UIColor.clear
-        }
-        
+        cell.backgroundConfiguration = UIBackgroundConfiguration.clear()
+
         var config = cell.defaultContentConfiguration()
         config.textProperties.font = UIFont.systemFont(ofSize: 17)
         config.textProperties.color = .label
@@ -435,27 +482,59 @@ final class CreateHabitViewController: UIViewController,
             config.secondaryText = categoryTitle?.isEmpty == false ? categoryTitle : nil
         case .schedule:
             config.text = "Расписание"
-            config.secondaryText = selectedWeekdays.isEmpty ? nil : selectedWeekdays.ruListDescription
+            config.secondaryText = selectedWeekdays.isEmpty
+            ? nil
+            : selectedWeekdays.ruListDescription
         }
         cell.contentConfiguration = config
         return cell
     }
     
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        let inset: CGFloat = indexPath.row == Row.allCases.count - 1 ? .greatestFiniteMagnitude : 16
-        cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: inset)
+    func tableView(_ tableView: UITableView,
+                   willDisplay cell: UITableViewCell,
+                   forRowAt indexPath: IndexPath) {
+        let isLast = indexPath.row == Row.allCases.count - 1
+        let rightInset: CGFloat = isLast ? tableView.bounds.width : 16
+        cell.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: rightInset)
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard Row(rawValue: indexPath.row) == .schedule else { return }
-        let scheduleVC = ScheduleViewController(selected: selectedWeekdays)
-        scheduleVC.onDone = { [weak self] days in
-            self?.selectedWeekdays = days
-            self?.updateCreateButtonState()
-            self?.tableView.reloadRows(at: [IndexPath(row: Row.schedule.rawValue, section: 0)], with: .none)
-            self?.updateTableHeight()
+    func tableView(_ tableView: UITableView,
+                   didSelectRowAt indexPath: IndexPath) {
+        guard let row = Row(rawValue: indexPath.row) else { return }
+        
+        switch row {
+        case .category:
+            openCategoryPicker()
+        case .schedule:
+            let scheduleVC = ScheduleViewController(selected: selectedWeekdays)
+            scheduleVC.onDone = { [weak self] days in
+                self?.selectedWeekdays = days
+                self?.updateCreateButtonState()
+                self?.tableView.reloadRows(
+                    at: [IndexPath(row: Row.schedule.rawValue, section: 0)],
+                    with: .none
+                )
+                self?.updateTableHeight()
+            }
+            navigationController?.pushViewController(scheduleVC, animated: true)
         }
-        navigationController?.pushViewController(scheduleVC, animated: true)
+    }
+    
+    private func openCategoryPicker() {
+        let vc = CategoriesViewController(preselectedCategoryTitle: categoryTitle)
+        vc.modalPresentationStyle = .pageSheet
+        
+        vc.onCategoryPicked = { [weak self] category in
+            guard let self else { return }
+            self.categoryTitle = category.title
+            self.tableView.reloadRows(
+                at: [IndexPath(row: Row.category.rawValue, section: 0)],
+                with: .none
+            )
+            self.updateCreateButtonState()
+        }
+        
+        present(vc, animated: true)
     }
     
     private func updateTableHeight() {
@@ -469,13 +548,15 @@ final class CreateHabitViewController: UIViewController,
     
     private func updateCollectionHeights() {
         emojiCollection.layoutIfNeeded()
-        let h1 = emojiCollection.collectionViewLayout.collectionViewContentSize.height
+        let h1 = emojiCollection.collectionViewLayout
+            .collectionViewContentSize.height
         if abs((emojiHeightConstraint?.constant ?? 0) - h1) > 0.5 {
             emojiHeightConstraint?.constant = h1
         }
         
         colorCollection.layoutIfNeeded()
-        let h2 = colorCollection.collectionViewLayout.collectionViewContentSize.height
+        let h2 = colorCollection.collectionViewLayout
+            .collectionViewContentSize.height
         if abs((colorHeightConstraint?.constant ?? 0) - h2) > 0.5 {
             colorHeightConstraint?.constant = h2
         }
@@ -483,24 +564,30 @@ final class CreateHabitViewController: UIViewController,
     }
     
     private func updateCreateButtonState() {
-        let nameValid = !(nameField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let nameValid = !(nameField.text ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
+        
         let daysValid = !selectedWeekdays.isEmpty
         let emojiValid = selectedEmoji != nil
         let colorValid = selectedColor != nil
+        let categoryValid = (categoryTitle?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty == false)
         
-        emojiLabel.textColor = titleBlack
-        colorLabel.textColor = titleBlack
+        let enabled = nameValid && daysValid && emojiValid && colorValid && categoryValid
         
-        let enabled = nameValid && daysValid && emojiValid && colorValid
         createButton.isEnabled = enabled
         createButton.backgroundColor = enabled ? createBlack : createDisabled
         createButton.setTitleColor(.white, for: .normal)
     }
     
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
+    
     
     func collectionView(_ collectionView: UICollectionView,
                         layout collectionViewLayout: UICollectionViewLayout,
@@ -531,38 +618,54 @@ final class CreateHabitViewController: UIViewController,
         return CGSize(width: side, height: side)
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        collectionView === emojiCollection ? emojiList.count : colorList.count
+    func collectionView(_ collectionView: UICollectionView,
+                        numberOfItemsInSection section: Int) -> Int {
+        if collectionView === emojiCollection {
+            return emojiList.count
+        } else if collectionView === colorCollection {
+            return colorList.count
+        } else {
+            return 1
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView,
                         cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView === emojiCollection {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "EmojiCell", for: indexPath) as! EmojiCell
+            let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: "EmojiCell",
+                for: indexPath
+            ) as! EmojiCell
             cell.configure(with: emojiList[indexPath.item])
             cell.isSelected = (indexPath == selectedEmojiIndexPath)
             return cell
         } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ColorCell", for: indexPath) as! ColorCell
+            let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: "ColorCell",
+                for: indexPath
+            ) as! ColorCell
             cell.configure(with: colorList[indexPath.item])
             cell.isSelected = (indexPath == selectedColorIndexPath)
             return cell
         }
     }
     
-    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+    func collectionView(_ collectionView: UICollectionView,
+                        shouldSelectItemAt indexPath: IndexPath) -> Bool {
         if collectionView === emojiCollection {
             if selectedEmojiIndexPath == indexPath {
                 collectionView.deselectItem(at: indexPath, animated: true)
-                (collectionView.cellForItem(at: indexPath) as? EmojiCell)?.isSelected = false
+                (collectionView.cellForItem(at: indexPath) as? EmojiCell)?
+                    .isSelected = false
                 selectedEmojiIndexPath = nil
                 selectedEmoji = nil
                 return false
             }
-        } else {
+        } else if collectionView === colorCollection {
             if selectedColorIndexPath == indexPath {
                 collectionView.deselectItem(at: indexPath, animated: true)
-                (collectionView.cellForItem(at: indexPath) as? ColorCell)?.isSelected = false
+                (collectionView.cellForItem(at: indexPath) as? ColorCell)?
+                    .isSelected = false
                 selectedColorIndexPath = nil
                 selectedColor = nil
                 return false
@@ -571,36 +674,54 @@ final class CreateHabitViewController: UIViewController,
         return true
     }
     
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView,
+                        didSelectItemAt indexPath: IndexPath) {
         if collectionView === emojiCollection {
             if let prev = selectedEmojiIndexPath, prev != indexPath {
                 collectionView.deselectItem(at: prev, animated: false)
-                (collectionView.cellForItem(at: prev) as? EmojiCell)?.isSelected = false
+                (collectionView.cellForItem(at: prev) as? EmojiCell)?
+                    .isSelected = false
             }
             selectedEmojiIndexPath = indexPath
             selectedEmoji = emojiList[indexPath.item]
-            (collectionView.cellForItem(at: indexPath) as? EmojiCell)?.isSelected = true
-        } else {
+            (collectionView.cellForItem(at: indexPath) as? EmojiCell)?
+                .isSelected = true
+        } else if collectionView === colorCollection {
             if let prev = selectedColorIndexPath, prev != indexPath {
                 collectionView.deselectItem(at: prev, animated: false)
-                (collectionView.cellForItem(at: prev) as? ColorCell)?.isSelected = false
+                (collectionView.cellForItem(at: prev) as? ColorCell)?
+                    .isSelected = false
             }
             selectedColorIndexPath = indexPath
             selectedColor = colorList[indexPath.item]
-            (collectionView.cellForItem(at: indexPath) as? ColorCell)?.isSelected = true
+            (collectionView.cellForItem(at: indexPath) as? ColorCell)?
+                .isSelected = true
         }
+        updateCreateButtonState()
     }
     
-    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+    func collectionView(_ collectionView: UICollectionView,
+                        didDeselectItemAt indexPath: IndexPath) {
         if collectionView === emojiCollection {
-            if selectedEmojiIndexPath == indexPath { selectedEmojiIndexPath = nil }
-            if selectedEmoji == emojiList[indexPath.item] { selectedEmoji = nil }
-            (collectionView.cellForItem(at: indexPath) as? EmojiCell)?.isSelected = false
-        } else {
-            if selectedColorIndexPath == indexPath { selectedColorIndexPath = nil }
-            if selectedColor == colorList[indexPath.item] { selectedColor = nil }
-            (collectionView.cellForItem(at: indexPath) as? ColorCell)?.isSelected = false
+            if selectedEmojiIndexPath == indexPath {
+                selectedEmojiIndexPath = nil
+            }
+            if selectedEmoji == emojiList[indexPath.item] {
+                selectedEmoji = nil
+            }
+            (collectionView.cellForItem(at: indexPath) as? EmojiCell)?
+                .isSelected = false
+        } else if collectionView === colorCollection {
+            if selectedColorIndexPath == indexPath {
+                selectedColorIndexPath = nil
+            }
+            if selectedColor == colorList[indexPath.item] {
+                selectedColor = nil
+            }
+            (collectionView.cellForItem(at: indexPath) as? ColorCell)?
+                .isSelected = false
         }
+        updateCreateButtonState()
     }
 }
 
@@ -639,7 +760,9 @@ private final class EmojiCell: UICollectionViewCell {
         ])
     }
     
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     func configure(with emoji: String) {
         emojiLabel.text = emoji
@@ -647,10 +770,14 @@ private final class EmojiCell: UICollectionViewCell {
     }
     
     private func updateSelection() {
-        container.backgroundColor = isSelected ? UIColor.hex("#E6E8EB") : UIColor.clear
+        container.backgroundColor = isSelected
+        ? UIColor.hex("#E6E8EB")
+        : UIColor.clear
     }
     
-    override var isSelected: Bool { didSet { updateSelection() } }
+    override var isSelected: Bool {
+        didSet { updateSelection() }
+    }
 }
 
 private final class ColorCell: UICollectionViewCell {
@@ -699,7 +826,9 @@ private final class ColorCell: UICollectionViewCell {
         container.layer.addSublayer(ringLayer)
     }
     
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -726,5 +855,7 @@ private final class ColorCell: UICollectionViewCell {
         }
     }
     
-    override var isSelected: Bool { didSet { updateSelection() } }
+    override var isSelected: Bool {
+        didSet { updateSelection() }
+    }
 }

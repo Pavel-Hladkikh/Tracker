@@ -1,150 +1,148 @@
-import Foundation
-import CoreData
 import UIKit
-
-public enum StoreChangeType {
-    case insert, delete, move, update
-}
+import CoreData
 
 protocol TrackerStoreObserver: AnyObject {
-    func storeWillChangeContent()
-    func storeDidChangeSection(at sectionIndex: Int, for type: StoreChangeType)
-    func storeDidChangeItem(at indexPath: IndexPath?, for type: StoreChangeType, newIndexPath: IndexPath?)
-    func storeDidChangeContent()
+    func storeDidUpdate(_ store: TrackerStore)
 }
 
-final class TrackerStore: NSObject, NSFetchedResultsControllerDelegate {
-
+final class TrackerStore: NSObject {
+    
     weak var observer: TrackerStoreObserver?
-
+    
     private let context: NSManagedObjectContext
-    private let categoryStore: TrackerCategoryStore
-    private var frc: NSFetchedResultsController<TrackerCoreData>!
-
-    init(context: NSManagedObjectContext = CoreDataStack.shared.viewContext,
-         categoryStore: TrackerCategoryStore = TrackerCategoryStore()) {
+    private let fetchedResultsController: NSFetchedResultsController<TrackerCoreData>
+    
+    override init() {
+        let context = CoreDataStack.shared.viewContext
         self.context = context
-        self.categoryStore = categoryStore
-        super.init()
-        configureFRC()
-    }
-
-    private func configureFRC() {
+        
         let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
-        request.sortDescriptors = [
-            NSSortDescriptor(key: "category.title", ascending: true, selector: #selector(NSString.localizedStandardCompare(_:))),
-            NSSortDescriptor(key: "name", ascending: true, selector: #selector(NSString.localizedStandardCompare(_:)))
-        ]
-        frc = NSFetchedResultsController(
+        
+        let categorySort = NSSortDescriptor(
+            key: "category.title",
+            ascending: true,
+            selector: #selector(NSString.localizedCaseInsensitiveCompare)
+        )
+        let nameSort = NSSortDescriptor(
+            key: "name",
+            ascending: true,
+            selector: #selector(NSString.localizedCaseInsensitiveCompare)
+        )
+        request.sortDescriptors = [categorySort, nameSort]
+        
+        fetchedResultsController = NSFetchedResultsController(
             fetchRequest: request,
             managedObjectContext: context,
-            sectionNameKeyPath: "category.title",
+            sectionNameKeyPath: nil,
             cacheName: nil
         )
-        frc.delegate = self
-    }
-
-    func performFetch() throws { try frc.performFetch() }
-
-    func numberOfSections() -> Int { frc.sections?.count ?? 0 }
-    func numberOfItems(in section: Int) -> Int { frc.sections?[section].numberOfObjects ?? 0 }
-    func titleForSection(_ section: Int) -> String { frc.sections?[section].name ?? "" }
-    func object(at indexPath: IndexPath) -> TrackerCoreData { frc.object(at: indexPath) }
-
-    func objects(inSection section: Int) -> [TrackerCoreData] {
-        guard let sectionInfo = frc.sections?[section],
-              let objs = sectionInfo.objects as? [TrackerCoreData] else { return [] }
-        return objs
-    }
-
-    func mapToModel(_ obj: TrackerCoreData) -> Tracker {
-        let id = obj.id ?? UUID()
-        let name = obj.name ?? ""
-        let colorHex = obj.colorHex ?? "#000000"
-        let color = UIColor.hex(colorHex, fallback: .black)
-        let emoji = obj.emoji ?? "🙂"
-
-        var scheduleSet: Set<Weekday>? = nil
-        if let arr = obj.schedule as? [NSNumber] {
-            scheduleSet = Set(arr.compactMap { Weekday(rawValue: $0.intValue) })
+        
+        super.init()
+        fetchedResultsController.delegate = self
+        
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            print("❌ performFetch error:", error)
         }
-        return Tracker(id: id, name: name, color: color, emoji: emoji, schedule: scheduleSet)
     }
-
-    func upsert(_ model: Tracker, in categoryTitle: String) throws {
-        let fetch: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
-        fetch.predicate = NSPredicate(format: "id == %@", model.id as CVarArg)
-        fetch.fetchLimit = 1
-        let obj = try context.fetch(fetch).first ?? TrackerCoreData(context: context)
-
-        obj.id = model.id
-        obj.name = model.name
-        obj.colorHex = model.color.toHexString() ?? "#000000"
-        obj.emoji = model.emoji
-        if let schedule = model.schedule {
-            obj.schedule = schedule.map { NSNumber(value: $0.rawValue) } as NSArray
+    
+    func performFetch() {
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            print("❌ performFetch error:", error)
+        }
+    }
+    
+    func numberOfSections() -> Int {
+        fetchedResultsController.sections?.count ?? 0
+    }
+    
+    func numberOfObjects(in section: Int) -> Int {
+        fetchedResultsController.sections?[section].numberOfObjects ?? 0
+    }
+    
+    func object(at indexPath: IndexPath) -> Tracker {
+        let core = fetchedResultsController.object(at: indexPath)
+        return mapToModel(core)
+    }
+    
+    func categoryTitle(for indexPath: IndexPath) -> String {
+        let core = fetchedResultsController.object(at: indexPath)
+        return core.category?.title ?? ""
+    }
+    
+    
+    func upsert(_ tracker: Tracker, in category: TrackerCategory) {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "id == %@", tracker.id as CVarArg)
+        
+        let core = (try? context.fetch(request).first) ?? TrackerCoreData(context: context)
+        
+        core.id = tracker.id
+        core.name = tracker.name
+        core.emoji = tracker.emoji
+        core.colorHex = tracker.color.toHexString()
+        
+        if let schedule = tracker.schedule {
+            let raw = schedule.map { NSNumber(value: $0.rawValue) }
+            core.schedule = raw as NSArray
         } else {
-            obj.schedule = nil
+            core.schedule = nil
         }
-
-        let category = try categoryStore.upsertCategory(with: categoryTitle)
-        obj.category = category
-
-        try saveIfNeeded()
-    }
-
-    func delete(id: UUID) throws {
-        let fetch: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
-        fetch.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        if let obj = try context.fetch(fetch).first {
-            context.delete(obj)
-            try saveIfNeeded()
+        
+        let catRequest: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+        catRequest.fetchLimit = 1
+        catRequest.predicate = NSPredicate(format: "title == %@", category.title)
+        
+        if let catCore = try? context.fetch(catRequest).first {
+            core.category = catCore
         }
+        
+        saveContext()
     }
-
-    private func saveIfNeeded() throws {
-        if context.hasChanges { try context.save() }
-    }
-
-    private func mapChange(_ type: NSFetchedResultsChangeType) -> StoreChangeType {
-        switch type {
-        case .insert: return .insert
-        case .delete: return .delete
-        case .move:   return .move
-        case .update: return .update
-        @unknown default: return .update
+    
+    func delete(tracker: Tracker) {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "id == %@", tracker.id as CVarArg)
+        
+        if let core = try? context.fetch(request).first {
+            context.delete(core)
+            saveContext()
         }
     }
-
-    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        observer?.storeWillChangeContent()
+    
+    private func saveContext() {
+        guard context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            print("❌ context save error:", error)
+        }
     }
-
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>,
-                    didChange sectionInfo: NSFetchedResultsSectionInfo,
-                    atSectionIndex sectionIndex: Int,
-                    for type: NSFetchedResultsChangeType) {
-        observer?.storeDidChangeSection(at: sectionIndex, for: mapChange(type))
-    }
-
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>,
-                    didChange anObject: Any,
-                    at indexPath: IndexPath?,
-                    for type: NSFetchedResultsChangeType,
-                    newIndexPath: IndexPath?) {
-        observer?.storeDidChangeItem(at: indexPath, for: mapChange(type), newIndexPath: newIndexPath)
-    }
-
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        observer?.storeDidChangeContent()
+    
+    private func mapToModel(_ core: TrackerCoreData) -> Tracker {
+        let color = UIColor(hex: core.colorHex ?? "#FFFFFF")
+        let scheduleArray = core.schedule as? [Int]
+        let schedule: Set<Weekday>? = scheduleArray.map {
+            Set($0.compactMap { Weekday(rawValue: $0) })
+        }
+        
+        return Tracker(
+            id: core.id ?? UUID(),
+            name: core.name ?? "",
+            color: color,
+            emoji: core.emoji ?? "🙂",
+            schedule: schedule
+        )
     }
 }
 
-private extension UIColor {
-    func toHexString() -> String? {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        guard getRed(&r, green: &g, blue: &b, alpha: &a) else { return nil }
-        let ri = Int(round(r * 255)), gi = Int(round(g * 255)), bi = Int(round(b * 255))
-        return String(format: "#%02X%02X%02X", ri, gi, bi)
+extension TrackerStore: NSFetchedResultsControllerDelegate {
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        observer?.storeDidUpdate(self)
     }
 }
