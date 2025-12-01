@@ -16,11 +16,11 @@ final class CategoryCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
         backgroundColor = .clear
-        contentView.backgroundColor = UIColor.hex("#E6E8EB", alpha: 0.3)
+        contentView.backgroundColor = Colors.cardStroke
         contentView.layer.masksToBounds = true
         
         titleLabel.font = .systemFont(ofSize: 17)
-        titleLabel.textColor = UIColor.hex("#1A1B22")
+        titleLabel.textColor = Colors.baseInverse
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         contentView.addSubview(titleLabel)

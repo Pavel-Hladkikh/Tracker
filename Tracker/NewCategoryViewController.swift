@@ -9,7 +9,7 @@ final class NewCategoryViewController: UIViewController {
     private let titleLabel: UILabel = {
         let l = UILabel()
         l.font = .systemFont(ofSize: 16, weight: .medium)
-        l.textColor = .black
+        l.textColor = Colors.baseInverse
         l.textAlignment = .center
         l.translatesAutoresizingMaskIntoConstraints = false
         return l
@@ -17,13 +17,13 @@ final class NewCategoryViewController: UIViewController {
     
     private let textField: UITextField = {
         let tf = UITextField()
-        tf.backgroundColor = UIColor.hex("#E6E8EB", alpha: 0.3)
+        tf.backgroundColor = Colors.cardStroke
         tf.layer.cornerRadius = 16
         tf.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
         tf.leftViewMode = .always
         tf.font = .systemFont(ofSize: 17)
-        tf.textColor = .black
-        tf.placeholder = "Введите название категории"
+        tf.textColor = Colors.baseInverse
+        tf.placeholder = NSLocalizedString("category_placeholder", comment: "")
         tf.translatesAutoresizingMaskIntoConstraints = false
         return tf
     }()
@@ -45,7 +45,7 @@ final class NewCategoryViewController: UIViewController {
         let l = UILabel()
         l.font = .systemFont(ofSize: 17)
         l.textColor = UIColor(hex: "#F56B6C")
-        l.text = "Ограничение 38 символов"
+        l.text = NSLocalizedString("category_limit_warning", comment: "")
         l.textAlignment = .center
         l.isHidden = true
         l.translatesAutoresizingMaskIntoConstraints = false
@@ -54,10 +54,10 @@ final class NewCategoryViewController: UIViewController {
     
     private let doneButton: UIButton = {
         let b = UIButton(type: .system)
-        b.setTitle("Готово", for: .normal)
-        b.setTitleColor(.white, for: .normal)
+        b.setTitle(NSLocalizedString("done_button_title", comment: ""), for: .normal)
+        b.setTitleColor(Colors.base, for: .normal)
         b.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        b.backgroundColor = .black
+        b.backgroundColor = Colors.baseInverse
         b.layer.cornerRadius = 16
         b.translatesAutoresizingMaskIntoConstraints = false
         return b
@@ -65,7 +65,7 @@ final class NewCategoryViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = Colors.base
         setupUI()
         addActions()
         updateDoneButtonState()
@@ -74,7 +74,7 @@ final class NewCategoryViewController: UIViewController {
     
     func configureForCreate(onSaved: @escaping (String) -> Void) {
         isEditMode = false
-        titleLabel.text = "Новая категория"
+        titleLabel.text = NSLocalizedString("new_category_title", comment: "")
         textField.text = ""
         onSave = onSaved
         clearButton.isHidden = true
@@ -84,7 +84,7 @@ final class NewCategoryViewController: UIViewController {
     
     func configureForEdit(initialTitle: String, onSaved: @escaping (String) -> Void) {
         isEditMode = true
-        titleLabel.text = "Редактирование категории"
+        titleLabel.text = NSLocalizedString("edit_category_title", comment: "")
         textField.text = initialTitle
         onSave = onSaved
         
@@ -193,6 +193,12 @@ final class NewCategoryViewController: UIViewController {
         let enabled = !trimmed.isEmpty && trimmed.count <= maxLength
         
         doneButton.isEnabled = enabled
-        doneButton.backgroundColor = enabled ? .black : UIColor(hex: "#AEAFB4")
+        doneButton.backgroundColor = enabled ? Colors.baseInverse : UIColor(hex: "#AEAFB4")
+        
+        if enabled {
+            doneButton.setTitleColor(Colors.base, for: .normal)
+        } else {
+            doneButton.setTitleColor(UIColor.white, for: .normal)
+        }
     }
 }

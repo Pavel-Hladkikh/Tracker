@@ -7,25 +7,25 @@ extension Weekday {
     
     var ruFull: String {
         switch self {
-        case .monday: "Понедельник"
-        case .tuesday: "Вторник"
-        case .wednesday: "Среда"
-        case .thursday: "Четверг"
-        case .friday: "Пятница"
-        case .saturday: "Суббота"
-        case .sunday: "Воскресенье"
+        case .monday:    NSLocalizedString("weekday_full_monday", comment: "")
+        case .tuesday:   NSLocalizedString("weekday_full_tuesday", comment: "")
+        case .wednesday: NSLocalizedString("weekday_full_wednesday", comment: "")
+        case .thursday:  NSLocalizedString("weekday_full_thursday", comment: "")
+        case .friday:    NSLocalizedString("weekday_full_friday", comment: "")
+        case .saturday:  NSLocalizedString("weekday_full_saturday", comment: "")
+        case .sunday:    NSLocalizedString("weekday_full_sunday", comment: "")
         }
     }
     
     var ruShort: String {
         switch self {
-        case .monday: "Пн"
-        case .tuesday: "Вт"
-        case .wednesday: "Ср"
-        case .thursday: "Чт"
-        case .friday: "Пт"
-        case .saturday: "Сб"
-        case .sunday: "Вс"
+        case .monday:    NSLocalizedString("weekday_short_monday", comment: "")
+        case .tuesday:   NSLocalizedString("weekday_short_tuesday", comment: "")
+        case .wednesday: NSLocalizedString("weekday_short_wednesday", comment: "")
+        case .thursday:  NSLocalizedString("weekday_short_thursday", comment: "")
+        case .friday:    NSLocalizedString("weekday_short_friday", comment: "")
+        case .saturday:  NSLocalizedString("weekday_short_saturday", comment: "")
+        case .sunday:    NSLocalizedString("weekday_short_sunday", comment: "")
         }
     }
 }
@@ -33,9 +33,9 @@ extension Weekday {
 extension Collection where Element == Weekday {
     var ruListDescription: String {
         if count == 7 {
-            return "Каждый день"
+            return NSLocalizedString("schedule_every_day", comment: "")
         } else if isEmpty {
-            return "Не задано"
+            return NSLocalizedString("schedule_not_set", comment: "")
         } else {
             let set = Set(self)
             return Weekday.uiOrder

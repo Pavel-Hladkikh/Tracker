@@ -1,0 +1,71 @@
+"trackers_title" = "Трекеры";
+"statistics_title" = "Статистика";
+
+"category_title" = "Категория";
+"categories_title" = "Категории";
+
+"new_category_title" = "Новая категория";
+"edit_category_title" = "Редактирование категории";
+"category_placeholder" = "Введите название категории";
+"category_limit_warning" = "Ограничение 38 символов";
+"add_category_button" = "Добавить категорию";
+"categories_placeholder" = "Привычки и события можно\nобъединить по смыслу";
+
+"new_habit_title" = "Новая привычка";
+"name_limit_warning" = "Ограничение 38 символов";
+"tracker_name_placeholder" = "Введите название трекера";
+
+"color_title" = "Цвет";
+"schedule_title" = "Расписание";
+"schedule_every_day" = "Каждый день";
+"schedule_not_set" = "Не задано";
+"done_button_title" = "Готово";
+"edit_button_title" = "Редактировать";
+"create_button_title" = "Создать";
+"cancel_button_title" = "Отменить";
+"delete_button_title" = "Удалить";
+"ok_button_title" = "OK";
+
+"search_placeholder" = "Поиск";
+"empty_state_title" = "Что будем отслеживать?";
+
+"onboarding_title_1" = "Отслеживайте только то, что хотите";
+"onboarding_title_2" = "Даже если это не литры воды и йога";
+"onboarding_button" = "Вот это технологии!";
+
+"delete_tracker_title" = "Удалить трекер";
+"delete_tracker_message" = "Удалить трекер «%@»?";
+
+"unmark_action" = "Снять отметку";
+"mark_done_action" = "Отметить выполнение";
+"add_button_accessibility" = "Добавить";
+
+"weekday_full_monday" = "Понедельник";
+"weekday_full_tuesday" = "Вторник";
+"weekday_full_wednesday" = "Среда";
+"weekday_full_thursday" = "Четверг";
+"weekday_full_friday" = "Пятница";
+"weekday_full_saturday" = "Суббота";
+"weekday_full_sunday" = "Воскресенье";
+
+"weekday_short_monday" = "Пн";
+"weekday_short_tuesday" = "Вт";
+"weekday_short_wednesday" = "Ср";
+"weekday_short_thursday" = "Чт";
+"weekday_short_friday" = "Пт";
+"weekday_short_saturday" = "Сб";
+"weekday_short_sunday" = "Вс";
+
+"delete_category_confirm_title" = "Эта категория точно не нужна?";
+"filters_title" = "Фильтры";
+"filters_all" = "Все трекеры";
+"filters_today" = "Трекеры на сегодня";
+"filters_done" = "Завершённые";
+"filters_undone" = "Незавершённые";
+"nothing_found_placeholder" = "Ничего не найдено";
+"edit_habit_title" = "Редактирование привычки";
+"save_button_title" = "Сохранить";
+"days_suffix" = "дней";
+"delete_tracker_confirm" = "Уверены что хотите удалить трекер?";
+"statistics_completed_subtitle" = "Трекеров завершено";
+"statistics_empty_title" = "Анализировать пока нечего";

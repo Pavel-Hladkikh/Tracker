@@ -19,7 +19,7 @@ final class TrackerStorage {
         return UIColor(hue: hue, saturation: 0.62, brightness: 0.86, alpha: 1)
     }
     
- 
+    
     func load() -> (categories: [TrackerCategory], completed: Set<TrackerRecord>)? {
         guard let fileURL = fileURL,
               let data = try? Data(contentsOf: fileURL),
